@@ -77,3 +77,29 @@
 - git push、git rebase、git reset --hard、强制推送
 - 公开发布（npm publish、生产部署等）
 ```
+
+## 全局 .gitignore
+
+路径：`~/.gitignore`
+
+```
+# AI 工具本地配置
+.claude/settings.local.json
+.cursor/
+.aider*
+.continue/
+.cody/
+
+# 密钥和凭证
+*.pem
+*.key
+credentials.json
+.npmrc
+.aws/
+.ssh/
+```
+
+配置命令：
+```bash
+git config --global core.excludesfile ~/.gitignore
+```
