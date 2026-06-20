@@ -1,58 +1,72 @@
 <template>
   <div class="budgets">
     <div class="page-header">
-      <h2>预算管理</h2>
-      <el-button type="primary" @click="openDialog()">+ 设置预算</el-button>
+      <div>
+        <h1>预算管理</h1>
+        <p class="page-desc">设定每月预算，控制开支</p>
+      </div>
+      <div class="header-actions">
+        <el-date-picker
+          v-model="currentMonth"
+          type="month"
+          placeholder="选择月份"
+          value-format="YYYY-MM"
+          @change="fetchBudgets"
+        />
+        <button class="btn btn-primary" @click="openDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          设置预算
+        </button>
+      </div>
     </div>
 
-    <!-- 月份选择 -->
-    <el-card class="filter-card">
-      <el-date-picker
-        v-model="currentMonth"
-        type="month"
-        placeholder="选择月份"
-        value-format="YYYY-MM"
-        @change="fetchBudgets"
-      />
-    </el-card>
-
     <!-- 预算列表 -->
-    <el-row :gutter="20">
-      <el-col :span="8" v-for="budget in budgets" :key="budget.id">
-        <el-card class="budget-card" shadow="hover">
-          <div class="budget-header">
-            <span class="budget-category">
-              {{ budget.category_icon }} {{ budget.category_name }}
-            </span>
-            <div class="budget-actions">
-              <el-button text type="primary" size="small" @click="openDialog(budget)">编辑</el-button>
-              <el-popconfirm title="确定删除？" @confirm="handleDelete(budget.id)">
-                <template #reference>
-                  <el-button text type="danger" size="small">删除</el-button>
-                </template>
-              </el-popconfirm>
-            </div>
+    <div v-if="budgets.length > 0" class="budget-grid">
+      <div v-for="budget in budgets" :key="budget.id" class="budget-card">
+        <div class="budget-card-header">
+          <div class="budget-category">
+            <span class="budget-icon">{{ budget.category_icon }}</span>
+            <span class="budget-name">{{ budget.category_name }}</span>
           </div>
-          <div class="budget-amount">
-            <span class="spent">¥{{ budget.spent?.toFixed(0) || 0 }}</span>
-            <span class="separator"> / </span>
-            <span class="total">¥{{ budget.amount.toFixed(0) }}</span>
+          <div class="budget-actions">
+            <button class="btn-link" @click="openDialog(budget)">编辑</button>
+            <el-popconfirm title="确定删除？" @confirm="handleDelete(budget.id)">
+              <template #reference>
+                <button class="btn-link danger">删除</button>
+              </template>
+            </el-popconfirm>
           </div>
-          <el-progress
-            :percentage="Math.min(budget.percentage || 0, 100)"
-            :status="getProgressStatus(budget.percentage)"
-          />
-          <div class="budget-remaining">
-            剩余: ¥{{ budget.remaining?.toFixed(0) || budget.amount.toFixed(0) }}
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+        <div class="budget-amounts">
+          <span class="amount-spent">¥{{ budget.spent?.toFixed(0) || 0 }}</span>
+          <span class="amount-sep"> / </span>
+          <span class="amount-total">¥{{ budget.amount.toFixed(0) }}</span>
+        </div>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            :class="{ warning: budget.percentage >= 80 && budget.percentage < 100, danger: budget.percentage >= 100 }"
+            :style="{ width: Math.min(budget.percentage || 0, 100) + '%' }"
+          ></div>
+        </div>
+        <div class="budget-remaining">
+          剩余 ¥{{ budget.remaining?.toFixed(0) || budget.amount.toFixed(0) }}
+        </div>
+      </div>
+    </div>
 
-    <el-empty v-if="budgets.length === 0" description="暂无预算设置" />
+    <div v-else class="card">
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+        </svg>
+        <p>暂无预算设置</p>
+        <button class="btn btn-primary" @click="openDialog()">设置预算</button>
+      </div>
+    </div>
 
     <!-- 添加/编辑弹窗 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.id ? '编辑预算' : '设置预算'" width="400">
+    <el-dialog v-model="dialog.visible" :title="dialog.id ? '编辑预算' : '设置预算'" width="440" class="custom-dialog">
       <el-form :model="dialog.form" label-width="80px">
         <el-form-item label="分类">
           <el-select
@@ -70,14 +84,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="预算金额">
-          <el-input v-model="dialog.form.amount" type="number">
+          <el-input v-model="dialog.form.amount" type="number" placeholder="请输入金额">
             <template #prefix>¥</template>
           </el-input>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialog.visible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <button class="btn btn-ghost" @click="dialog.visible = false">取消</button>
+        <button class="btn btn-primary" @click="handleSave">保存</button>
       </template>
     </el-dialog>
   </div>
@@ -120,12 +134,6 @@ async function fetchCategories() {
   }
 }
 
-function getProgressStatus(percentage) {
-  if (percentage >= 100) return 'exception'
-  if (percentage >= 80) return 'warning'
-  return ''
-}
-
 function openDialog(budget = null) {
   if (budget) {
     dialog.id = budget.id
@@ -145,7 +153,6 @@ async function handleSave() {
 
   try {
     const data = { ...dialog.form, month: currentMonth.value }
-
     if (dialog.id) {
       await api.put(`/budgets/${dialog.id}`, { amount: dialog.form.amount })
     } else {
@@ -174,56 +181,231 @@ async function handleDelete(id) {
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  margin-bottom: 24px;
 }
 
-.filter-card {
-  margin-bottom: 20px;
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+}
+
+.page-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background: #4F46E5;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+}
+
+.btn-ghost {
+  background: #fff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-ghost:hover {
+  background: #f8fafc;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #4F46E5;
+  font-weight: 500;
+  padding: 0;
+}
+
+.btn-link:hover {
+  color: #4338ca;
+}
+
+.btn-link.danger {
+  color: #ef4444;
+}
+
+.btn-link.danger:hover {
+  color: #dc2626;
+}
+
+/* 预算网格 */
+.budget-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
 .budget-card {
-  margin-bottom: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
 }
 
-.budget-header {
+.budget-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .budget-category {
-  font-size: 16px;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.budget-icon {
+  font-size: 20px;
+}
+
+.budget-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
 }
 
 .budget-actions {
   display: flex;
-  gap: 5px;
+  gap: 10px;
 }
 
-.budget-amount {
-  margin-bottom: 10px;
+.budget-amounts {
+  margin-bottom: 12px;
   font-size: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
-.budget-amount .spent {
-  color: #f56c6c;
-  font-weight: bold;
+.amount-spent {
+  font-weight: 700;
+  color: #ef4444;
 }
 
-.budget-amount .separator {
-  color: #909399;
+.amount-sep {
+  color: #cbd5e1;
 }
 
-.budget-amount .total {
-  color: #303133;
+.amount-total {
+  color: #334155;
+  font-weight: 500;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4F46E5;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.warning {
+  background: #f59e0b;
+}
+
+.progress-fill.danger {
+  background: #ef4444;
 }
 
 .budget-remaining {
-  margin-top: 10px;
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* 空状态 */
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  color: #94a3b8;
   font-size: 14px;
-  color: #67c23a;
+  margin-bottom: 20px;
+}
+
+/* 弹窗 */
+.custom-dialog :deep(.el-dialog__header) {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 20px;
+  margin: 0;
+}
+
+.custom-dialog :deep(.el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.custom-dialog :deep(.el-dialog__footer) {
+  border-top: 1px solid #f1f5f9;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 960px) {
+  .budget-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .budget-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+  }
 }
 </style>

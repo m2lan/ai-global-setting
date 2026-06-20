@@ -1,9 +1,7 @@
 <template>
   <div class="stats">
-    <h2>统计分析</h2>
-
-    <!-- 月份选择 -->
-    <el-card class="filter-card">
+    <div class="page-header">
+      <h1>统计分析</h1>
       <el-date-picker
         v-model="currentMonth"
         type="month"
@@ -11,75 +9,87 @@
         value-format="YYYY-MM"
         @change="fetchAllStats"
       />
-    </el-card>
+    </div>
 
-    <el-row :gutter="20">
-      <!-- 收支概览 -->
-      <el-col :span="8">
-        <el-card>
-          <template #header>本月概览</template>
-          <div class="summary-list">
-            <div class="summary-item">
-              <span>收入</span>
-              <span class="income-text">¥{{ summary.income.toFixed(2) }}</span>
-            </div>
-            <div class="summary-item">
-              <span>支出</span>
-              <span class="expense-text">¥{{ summary.expense.toFixed(2) }}</span>
-            </div>
-            <el-divider />
-            <div class="summary-item">
-              <span>结余</span>
-              <span :class="summary.balance >= 0 ? 'income-text' : 'expense-text'">
-                ¥{{ summary.balance.toFixed(2) }}
-              </span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+    <!-- 收支概览 -->
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="summary-label">收入</div>
+        <div class="summary-value income">¥{{ summary.income.toFixed(2) }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">支出</div>
+        <div class="summary-value expense">¥{{ summary.expense.toFixed(2) }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">结余</div>
+        <div :class="['summary-value', summary.balance >= 0 ? 'income' : 'expense']">
+          ¥{{ summary.balance.toFixed(2) }}
+        </div>
+      </div>
+    </div>
 
+    <div class="chart-grid">
       <!-- 支出分类饼图 -->
-      <el-col :span="16">
-        <el-card>
-          <template #header>支出分类</template>
-          <div ref="pieChartRef" style="height: 300px"></div>
-        </el-card>
-      </el-col>
-    </el-row>
+      <div class="card">
+        <div class="card-header">
+          <h3>支出分类</h3>
+        </div>
+        <div class="card-body">
+          <div ref="pieChartRef" class="chart-container"></div>
+        </div>
+      </div>
 
-    <!-- 趋势图 -->
-    <el-card style="margin-top: 20px">
-      <template #header>收支趋势（近6个月）</template>
-      <div ref="trendChartRef" style="height: 300px"></div>
-    </el-card>
+      <!-- 趋势图 -->
+      <div class="card">
+        <div class="card-header">
+          <h3>收支趋势（近6个月）</h3>
+        </div>
+        <div class="card-body">
+          <div ref="trendChartRef" class="chart-container"></div>
+        </div>
+      </div>
+    </div>
 
     <!-- 分类明细 -->
-    <el-card style="margin-top: 20px">
-      <template #header>分类明细</template>
-      <el-table :data="categoryStats.categories" style="width: 100%">
-        <el-table-column label="分类" width="150">
-          <template #default="{ row }">
-            <span>{{ row.icon }} {{ row.name }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="金额" width="120" align="right">
-          <template #default="{ row }">
-            <span class="expense-text">¥{{ row.total.toFixed(2) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="占比" width="100">
-          <template #default="{ row }">
-            <span>{{ row.percentage }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="笔数" width="80" prop="count" />
-        <el-table-column label="进度">
-          <template #default="{ row }">
-            <el-progress :percentage="row.percentage" :show-text="false" />
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+    <div class="card">
+      <div class="card-header">
+        <h3>分类明细</h3>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>分类</th>
+              <th class="text-right">金额</th>
+              <th class="text-right">占比</th>
+              <th class="text-right">笔数</th>
+              <th style="width: 200px">进度</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="cat in categoryStats.categories" :key="cat.name">
+              <td>
+                <span class="category-tag">{{ cat.icon }} {{ cat.name }}</span>
+              </td>
+              <td class="text-right">
+                <span class="amount-expense">¥{{ cat.total.toFixed(2) }}</span>
+              </td>
+              <td class="text-right text-muted">{{ cat.percentage }}%</td>
+              <td class="text-right text-muted">{{ cat.count }}</td>
+              <td>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: cat.percentage + '%' }"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-if="categoryStats.categories.length === 0" class="empty-state">
+          暂无数据
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -159,43 +169,65 @@ function initCharts() {
 }
 
 function updateCharts() {
-  // 更新饼图
   if (pieChart && categoryStats.value.categories.length > 0) {
     pieChart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+      color: ['#4F46E5', '#7C3AED', '#A78BFA', '#C4B5FD', '#DDD6FE', '#EDE9FE', '#818CF8', '#6366F1'],
       series: [{
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: ['45%', '72%'],
+        center: ['50%', '50%'],
         data: categoryStats.value.categories.map(c => ({
           name: c.name,
           value: c.total
         })),
+        label: { fontSize: 12, color: '#64748b' },
         emphasis: {
-          itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+          itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.15)' }
         }
       }]
     })
   }
 
-  // 更新趋势图
   if (trendChart && trendData.value.length > 0) {
     trendChart.setOption({
       tooltip: { trigger: 'axis' },
-      legend: { data: ['收入', '支出'] },
-      xAxis: { type: 'category', data: trendData.value.map(d => d.month) },
-      yAxis: { type: 'value' },
+      legend: {
+        data: ['收入', '支出'],
+        right: 0,
+        top: 0,
+        textStyle: { fontSize: 12, color: '#64748b' }
+      },
+      grid: { left: 50, right: 20, top: 40, bottom: 30 },
+      xAxis: {
+        type: 'category',
+        data: trendData.value.map(d => d.month),
+        axisLine: { lineStyle: { color: '#e2e8f0' } },
+        axisLabel: { color: '#94a3b8', fontSize: 12 }
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: '#f1f5f9' } },
+        axisLabel: { color: '#94a3b8', fontSize: 12 }
+      },
       series: [
         {
           name: '收入',
           type: 'line',
+          smooth: true,
           data: trendData.value.map(d => d.income),
-          itemStyle: { color: '#67c23a' }
+          itemStyle: { color: '#10b981' },
+          lineStyle: { width: 2.5 },
+          areaStyle: { color: 'rgba(16, 185, 129, 0.08)' }
         },
         {
           name: '支出',
           type: 'line',
+          smooth: true,
           data: trendData.value.map(d => d.expense),
-          itemStyle: { color: '#f56c6c' }
+          itemStyle: { color: '#ef4444' },
+          lineStyle: { width: 2.5 },
+          areaStyle: { color: 'rgba(239, 68, 68, 0.08)' }
         }
       ]
     })
@@ -204,32 +236,162 @@ function updateCharts() {
 </script>
 
 <style scoped>
-.stats h2 {
-  margin-bottom: 20px;
-}
-
-.filter-card {
-  margin-bottom: 20px;
-}
-
-.summary-list {
-  padding: 10px 0;
-}
-
-.summary-item {
+.page-header {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
-  font-size: 16px;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
-.income-text {
-  color: #67c23a;
-  font-weight: bold;
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.3px;
 }
 
-.expense-text {
-  color: #f56c6c;
-  font-weight: bold;
+/* 概览卡片 */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-value.income {
+  color: #10b981;
+}
+
+.summary-value.expense {
+  color: #ef4444;
+}
+
+/* 图表网格 */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.chart-container {
+  height: 300px;
+}
+
+/* 卡片 */
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* 表格 */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.data-table td {
+  padding: 14px 0;
+  font-size: 14px;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-muted {
+  color: #94a3b8;
+}
+
+.amount-expense {
+  color: #ef4444;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.category-tag {
+  font-size: 13px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4F46E5;
+  border-radius: 3px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #94a3b8;
+  padding: 32px 0;
+  font-size: 14px;
+}
+
+@media (max-width: 860px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+  .summary-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

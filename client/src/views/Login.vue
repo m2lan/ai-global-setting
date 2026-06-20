@@ -1,55 +1,50 @@
 <template>
-  <div class="login-container">
-    <el-card class="login-card">
-      <template #header>
-        <h2>💰 记账本 - 登录</h2>
-      </template>
+  <AuthLayout
+    title="欢迎回来"
+    subtitle="登录你的账户继续使用"
+    link-to="/register"
+    link-text="立即注册"
+    link-hint="还没有账户？"
+  >
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="0"
+      @submit.prevent="handleLogin"
+    >
+      <el-form-item prop="username">
+        <el-input
+          v-model="form.username"
+          placeholder="用户名"
+          size="large"
+        />
+      </el-form-item>
 
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="0"
-        @submit.prevent="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="用户名"
-            prefix-icon="User"
-            size="large"
-          />
-        </el-form-item>
+      <el-form-item prop="password">
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="密码"
+          size="large"
+          show-password
+          @keyup.enter="handleLogin"
+        />
+      </el-form-item>
 
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="密码"
-            prefix-icon="Lock"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            style="width: 100%"
-            @click="handleLogin"
-          >
-            登录
-          </el-button>
-        </el-form-item>
-
-        <div class="links">
-          <router-link to="/register">没有账号？去注册</router-link>
-        </div>
-      </el-form>
-    </el-card>
-  </div>
+      <el-form-item>
+        <el-button
+          type="primary"
+          size="large"
+          :loading="loading"
+          class="submit-btn"
+          @click="handleLogin"
+        >
+          登录
+        </el-button>
+      </el-form-item>
+    </el-form>
+  </AuthLayout>
 </template>
 
 <script setup>
@@ -57,6 +52,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
+import AuthLayout from '../components/AuthLayout.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -95,29 +91,18 @@ async function handleLogin() {
 </script>
 
 <style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.submit-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  background: #4F46E5;
+  border: none;
+  letter-spacing: 0.5px;
 }
 
-.login-card {
-  width: 400px;
-}
-
-.login-card h2 {
-  text-align: center;
-  margin: 0;
-}
-
-.links {
-  text-align: center;
-}
-
-.links a {
-  color: #409eff;
-  text-decoration: none;
+.submit-btn:hover {
+  background: #4338ca;
 }
 </style>

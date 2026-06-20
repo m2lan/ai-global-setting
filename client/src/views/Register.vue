@@ -1,66 +1,60 @@
 <template>
-  <div class="register-container">
-    <el-card class="register-card">
-      <template #header>
-        <h2>💰 记账本 - 注册</h2>
-      </template>
+  <AuthLayout
+    title="创建账户"
+    subtitle="注册后即可开始记账"
+    link-to="/login"
+    link-text="立即登录"
+    link-hint="已有账户？"
+  >
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="0"
+      @submit.prevent="handleRegister"
+    >
+      <el-form-item prop="username">
+        <el-input
+          v-model="form.username"
+          placeholder="用户名（3-20位）"
+          size="large"
+        />
+      </el-form-item>
 
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="0"
-        @submit.prevent="handleRegister"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="用户名（3-20位）"
-            prefix-icon="User"
-            size="large"
-          />
-        </el-form-item>
+      <el-form-item prop="password">
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="密码（至少6位）"
+          size="large"
+          show-password
+        />
+      </el-form-item>
 
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="密码（至少6位）"
-            prefix-icon="Lock"
-            size="large"
-            show-password
-          />
-        </el-form-item>
+      <el-form-item prop="confirmPassword">
+        <el-input
+          v-model="form.confirmPassword"
+          type="password"
+          placeholder="确认密码"
+          size="large"
+          show-password
+          @keyup.enter="handleRegister"
+        />
+      </el-form-item>
 
-        <el-form-item prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="确认密码"
-            prefix-icon="Lock"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            style="width: 100%"
-            @click="handleRegister"
-          >
-            注册
-          </el-button>
-        </el-form-item>
-
-        <div class="links">
-          <router-link to="/login">已有账号？去登录</router-link>
-        </div>
-      </el-form>
-    </el-card>
-  </div>
+      <el-form-item>
+        <el-button
+          type="primary"
+          size="large"
+          :loading="loading"
+          class="submit-btn"
+          @click="handleRegister"
+        >
+          注册
+        </el-button>
+      </el-form-item>
+    </el-form>
+  </AuthLayout>
 </template>
 
 <script setup>
@@ -68,6 +62,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
+import AuthLayout from '../components/AuthLayout.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -125,29 +120,18 @@ async function handleRegister() {
 </script>
 
 <style scoped>
-.register-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.submit-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  background: #4F46E5;
+  border: none;
+  letter-spacing: 0.5px;
 }
 
-.register-card {
-  width: 400px;
-}
-
-.register-card h2 {
-  text-align: center;
-  margin: 0;
-}
-
-.links {
-  text-align: center;
-}
-
-.links a {
-  color: #409eff;
-  text-decoration: none;
+.submit-btn:hover {
+  background: #4338ca;
 }
 </style>
